@@ -14,6 +14,7 @@ WIDTH = 400
 ACC = 0.5
 FRIC = -0.12
 FPS = 60
+HARD = 9
 class Player(pygame.sprite.Sprite):
      	
      #pygame.sprite.spritecollide(sprite, sprite_group, delete) #syntax of sprite collide
@@ -70,36 +71,64 @@ class Player(pygame.sprite.Sprite):
     # Check if the player is standing on a platform
       hits = pygame.sprite.spritecollide(self, platforms, False)
     # If they are on a platform (grounded), OR  They have jumped less than 2 times (double jump allowed)
+
       if hits or self.jump_count < 2:
-               self.vel.y = -15  # Apply upward velocity (negative because y increases downward)
+               self.vel.y = -17.5 # Apply upward velocity (negative because y increases downward)
                self.jump_count += 1  # Track how many jumps have been made
 
 
 def plat_gen():
     # Keep adding platforms until there are at least 7
-          while len(platforms) < 7:
+         if len(platforms) < HARD :
         # Pick a random width for variety
-               width = random.randrange(10, 20)
-
+               width = random.randrange(10, 15)
+    #adjust the distance above platforms generated
           # Create a new platform
                p = platform()
-
+               C = True
                # Set its position:
                # X is random but within screen bounds
                # Y is just above the screen (so it scrolls down naturally)
-               p.rect.center = (
-                    random.randrange(0, WIDTH - width),
-                    random.randrange(-50, 0)
-               )
-
+               
+               if C:
+                    p = platform()
+                    p.rect.center = (
+                         random.randrange(0, WIDTH - width),
+                         random.randrange(-250, 0)
+                    )
+                    C = check(p, platforms)
                # Add the platform to both sprite groups
-               platforms.add(p)
-               all_sprites.add(p)   
+               if not C:
+                    platforms.add(p)
+                    all_sprites.add(p)   
+def check(platform, groupies):
+    """
+    This function checks if the platform is bumping into or too close to others.
+    
+    platform: one platform we're checking
+    groupies: a bunch of platforms or things
+    """
+
+    # Look to see if the platform is bumping into any others
+    if pygame.sprite.spritecollideany(platform, groupies):
+        return True
+
+    # Look to see if the platform is very close (but not touching)
+    for entity in groupies:
+        if entity == platform:
+            continue  # Skip if it's the same platform
+
+        # If it's less than 50 steps away from the top or bottom, it's too close
+        if (abs(platform.rect.top - entity.rect.bottom) < 50) and \
+           (abs(platform.rect.bottom - entity.rect.top) < 50):
+            return True
+
+    return False  # Everything is okay
 
 class platform(pygame.sprite.Sprite):
      def __init__(self):
           super().__init__()
-          self.surf = pygame.Surface((100, 20))
+          self.surf = pygame.Surface((100, 5))
           self.surf.fill((255,0,0))
           self.rect = self.surf.get_rect(center = (random.randint(0, WIDTH-10), 
                                                    random.randint(0, HEIGHT-30)))
@@ -135,7 +164,7 @@ running = True
          # if event is of type quit then 
         # set running bool to false
         
-for x in range(random.randint(5, 6)):
+for x in range(random.randint(6, 7)):
      pl = platform()
      platforms.add(pl)
      all_sprites.add(pl)
@@ -176,4 +205,4 @@ while running:
      FramePerSec.tick(FPS)
                
 
-
+pygame.time.get_ticks()
